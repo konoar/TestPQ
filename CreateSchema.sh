@@ -3,7 +3,7 @@
 #########################################################
 #
 # CreateSchema.sh
-#   Copyright 2019.09.05 konoar
+#   Copyright 2019.10.05 konoar
 #
 #########################################################
 
@@ -43,7 +43,7 @@ WITH
     FILLFACTOR = 90
 );
 
-CREATE INDEX ON TESTPQ.R_TEST
+CREATE INDEX ON TestPQ.R_TEST
 (
     value
 );
@@ -59,7 +59,7 @@ CREATE FUNCTION TestPQ.F_SELECT_TEST(target TIMESTAMP)
     FROM
         TestPQ.R_TEST r1
     WHERE
-       r1.ctime <= target 
+        r1.ctime <= target 
     WINDOW
         W AS(ORDER BY r1.value ASC)
 

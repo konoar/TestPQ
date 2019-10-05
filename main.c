@@ -1,7 +1,7 @@
 /****************************************************************
 
    main.c
-     copyright 2019.10.05 konoar
+     Copyright 2019.10.05 konoar
 
  ****************************************************************/
 #include "libpq-fe.h"
@@ -262,4 +262,3 @@ int main(int argc, const  char* argv[])
     return ret;
 
 }
-

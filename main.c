@@ -223,7 +223,7 @@ int ksInsert(PGconn *conn)
 
     putc('\n', stdout);
 
-    return KS_OK;
+    return retval;
 
  }
 

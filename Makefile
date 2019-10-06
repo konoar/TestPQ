@@ -12,7 +12,7 @@ LDFLAGS := -L/usr/local/lib -lpq
 .PHONY: clean run
 
 run: $(TESTBIN)
-	@./CreateSchema.sh
+	@./Schema.sh
 	@-$(TESTBIN)
 
 clean:

@@ -2,7 +2,7 @@
 
 #########################################################
 #
-# CreateSchema.sh
+# Schema.sh
 #   Copyright 2019.10.05 konoar
 #
 #########################################################
@@ -53,15 +53,15 @@ CREATE FUNCTION TestPQ.F_SELECT_TEST(target TIMESTAMP)
 \$\$
 
     SELECT
-        ROW_NUMBER() OVER W AS rid,
-        r1.tid              AS tid,
-        r1.value            AS value
+        ROW_NUMBER() OVER w1    AS rid,
+        r1.tid                  AS tid,
+        r1.value                AS value
     FROM
         TestPQ.R_TEST r1
     WHERE
         r1.ctime <= target 
     WINDOW
-        W AS(ORDER BY r1.value ASC)
+        w1 AS(ORDER BY r1.value ASC)
 
 \$\$ LANGUAGE SQL;
 

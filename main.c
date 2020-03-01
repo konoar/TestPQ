@@ -341,7 +341,7 @@ void *ksSelectA(void *param)
             break;
         }
 
-        KS_SLEEP(200);
+        KS_SLEEP(100);
 
         if (KS_OK != (retval = ksSelectASub(conn, "cursor2"))) {
             break;
@@ -475,11 +475,14 @@ void *ksSelectB(void *param)
 int main(int argc, const  char* argv[])
 {
 
-    int     ret     = KS_OK;
-    PGconn  *connu, *conns;
-    pthread_t thu, ths;
-    void *rthu, *rths;
-    ksInsertContext ictx[KS_INSERT_COUNT];
+    int             ret         = KS_OK;
+    PGconn          *connu      = NULL;
+    PGconn          *conns      = NULL;
+    pthread_t       thu         = 0;
+    pthread_t       ths         = 0;
+    void            *rthu       = NULL;
+    void            *rths       = NULL;
+    ksInsertContext ictx        [KS_INSERT_COUNT];
 
     for (int idx = 0; idx < KS_INSERT_COUNT; idx++) {
 
@@ -489,12 +492,6 @@ int main(int argc, const  char* argv[])
         ictx[idx].data      = ksInsertData[idx];
 
     }
-
-    thu = 0;
-    ths = 0;
-
-    connu = NULL;
-    conns = NULL;
 
     do {
 

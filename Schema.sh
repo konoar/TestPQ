@@ -12,17 +12,20 @@ then
     PG_HOST="127.0.0.1"
 fi
 
-
 # Drop
 psql -h ${PG_HOST} -U postgres <<-EOF
+
     DROP DATABASE IF EXISTS ${USER};
     DROP ROLE     IF EXISTS ${USER};
+
 EOF
 
 # Create
 psql -h ${PG_HOST} -U postgres <<-EOF
+
     CREATE ROLE     ${USER} WITH LOGIN;
     CREATE DATABASE ${USER} WITH OWNER ${USER};
+
 EOF
 
 psql -h ${PG_HOST} -U ${USER}  <<-EOF

@@ -79,7 +79,7 @@ int ksConnect(PGconn **conn)
 void *ksInsert(void *param)
 {
  
-    ksInsertContextPtr  ctx     = (ksInsertContextPtr) param;
+    ksInsertContextPtr  ctx     = (ksInsertContextPtr)param;
     PGresult            *res    = NULL;
     int                 retval  = KS_OK;
     char                buff    [256];
@@ -311,7 +311,7 @@ int ksSelectASub(PGconn *conn, const char *cursorname)
 void *ksSelectA(void *param)
 {
 
-    PGconn      *conn       = (PGconn*) param;
+    PGconn      *conn       = (PGconn*)param;
     PGresult    *res        = NULL;
     long        retval      = KS_OK;
 
@@ -517,17 +517,17 @@ int main(int argc, const  char* argv[])
             break;
         }
 
-        if (0 != pthread_create(&thu, NULL, ksUpdate,  (void*) connu)) {
+        if (0 != pthread_create(&thu, NULL, ksUpdate,  (void*)connu)) {
             break;
         }
 
         for (int idx = 0; idx < KS_INSERT_COUNT; idx++) {
-            if (0 != pthread_create(&ictx[idx].pth, NULL, ksInsert,  (void*) &ictx[idx])) {
+            if (0 != pthread_create(&ictx[idx].pth, NULL, ksInsert,  (void*)&ictx[idx])) {
                 break;
             }
         }
 
-        if (0 != pthread_create(&ths, NULL, ksSelectB, (void*) conns)) {
+        if (0 != pthread_create(&ths, NULL, ksSelectB, (void*)conns)) {
             break;
         }
 

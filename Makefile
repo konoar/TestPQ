@@ -7,7 +7,7 @@
 
 TESTBIN := ./testbin
 CFLAGS  := -I/usr/local/include
-LDFLAGS := -L/usr/local/lib -lpq
+LDFLAGS := -L/usr/local/lib -lpq -lpthread
 
 .PHONY: clean run
 

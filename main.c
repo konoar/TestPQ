@@ -606,7 +606,7 @@ int main(int argc, const  char* argv[])
         PQfinish(connu1);
     }
 
-    if (connu1) {
+    if (connu2) {
         PQfinish(connu2);
     }
 

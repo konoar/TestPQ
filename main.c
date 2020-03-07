@@ -504,15 +504,15 @@ int main(int argc, const  char* argv[])
 {
 
     int             ret         = KS_OK;
+    PGconn          *conns      = NULL;
     PGconn          *connu1     = NULL;
     PGconn          *connu2     = NULL;
-    PGconn          *conns      = NULL;
+    pthread_t       ths         = 0;
     pthread_t       thu1        = 0;
     pthread_t       thu2        = 0;
-    pthread_t       ths         = 0;
+    void            *rths       = NULL;
     void            *rthu1      = NULL;
     void            *rthu2      = NULL;
-    void            *rths       = NULL;
     ksInsertContext ictx        [KS_INSERT_COUNT];
 
     for (int idx = 0; idx < KS_INSERT_COUNT; idx++) {
@@ -540,9 +540,9 @@ int main(int argc, const  char* argv[])
             break;
         }
 
-        if (KS_OK != (ret = ksConnect(&connu1)) ||
-            KS_OK != (ret = ksConnect(&connu2)) ||
-            KS_OK != (ret = ksConnect(&conns))) {
+        if (KS_OK != (ret = ksConnect(&conns))  ||
+            KS_OK != (ret = ksConnect(&connu1)) ||
+            KS_OK != (ret = ksConnect(&connu2))) {
             break;
         }
 
@@ -581,6 +581,13 @@ int main(int argc, const  char* argv[])
 
     }
 
+    if (ths) {
+        pthread_join(ths, &rths);
+        if (ret == KS_OK) {
+            ret = *((long*)&rths);
+        }
+    }
+
     if (thu1) {
         pthread_join(thu1, &rthu1);
         if (ret == KS_OK) {
@@ -595,11 +602,8 @@ int main(int argc, const  char* argv[])
         }
     }
 
-    if (ths) {
-        pthread_join(ths, &rths);
-        if (ret == KS_OK) {
-            ret = *((long*)&rths);
-        }
+    if (conns) {
+        PQfinish(conns);
     }
 
     if (connu1) {
@@ -608,10 +612,6 @@ int main(int argc, const  char* argv[])
 
     if (connu2) {
         PQfinish(connu2);
-    }
-
-    if (conns) {
-        PQfinish(conns);
     }
 
     return ret;

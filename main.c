@@ -17,6 +17,22 @@
 #define KS_SERIALIZABLE     1
 #define KS_ISOLATION_LEVEL  KS_READCOMMITED     
 
+#if (KS_ISOLATION_LEVEL == KS_READCOMMITED)
+//
+// READ COMMITED
+//
+#define KS_BEGINTRANSACTION_READONLY    "BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED READ ONLY"
+#define KS_BEGINTRANSACTION_READWRITE   "BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED READ WRITE"
+#elif (KS_ISOLATION_LEVEL == KS_SERIALIZABLE)
+//
+// SERIALIZABLE
+//
+#define KS_BEGINTRANSACTION_READONLY    "BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE READ ONLY"
+#define KS_BEGINTRANSACTION_READWRITE   "BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE READ WRITE"
+#else
+#error BAD ISOLATION LEVEL.
+#endif
+
 #define KS_SLEEP(_a_)                           \
     do {                                        \
                                                 \
@@ -88,15 +104,7 @@ void *ksInsert(void *param)
 
         // BEGIN TRANSACTION
 
-        res = PQexec(ctx->conn,
-#if   (KS_ISOLATION_LEVEL == KS_READCOMMITED)
-            "BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED READ WRITE"
-#elif (KS_ISOLATION_LEVEL == KS_SERIALIZABLE)
-            "BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE READ WRITE"
-#else
-#error BAD ISOLATION LEVEL.
-#endif
-            );
+        res = PQexec(ctx->conn, KS_BEGINTRANSACTION_READWRITE);
 
         if (PGRES_COMMAND_OK != PQresultStatus(res)) {
             retval = KS_NG;
@@ -142,7 +150,7 @@ void *ksInsert(void *param)
 
 }
 
-void *ksUpdate(void *param)
+void *ksUpdateSub(void *param, int pat)
 {
 
     PGconn      *conn       = (PGconn*)param;
@@ -155,15 +163,7 @@ void *ksUpdate(void *param)
 
         // BEGIN TRANSACTION
 
-        res1 = PQexec(conn,
-#if   (KS_ISOLATION_LEVEL == KS_READCOMMITED)
-            "BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED READ WRITE"
-#elif (KS_ISOLATION_LEVEL == KS_SERIALIZABLE)
-            "BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE READ WRITE"
-#else
-#error BAD ISOLATION LEVEL.
-#endif
-            );
+        res1 = PQexec(conn, KS_BEGINTRANSACTION_READWRITE);
 
         if (PGRES_COMMAND_OK != PQresultStatus(res1)) {
             retval = KS_NG;
@@ -175,14 +175,33 @@ void *ksUpdate(void *param)
 
         // DECLARE CURSOR
 
-        res1 = PQexec(conn,
-            "DECLARE cursoru CURSOR FOR "
-              "SELECT "
-                "tid,  "
-                "value "
-              "FROM "
-                "TestPQ.R_TEST "
-              "FOR UPDATE");
+        if (1 == pat) {
+
+            sprintf(buff,
+                "DECLARE cursoru CURSOR FOR "
+                  "SELECT  "
+                    "tid,  "
+                    "value "
+                  "FROM    "
+                    "TestPQ.R_TEST "
+                  "ORDER BY value ASC "
+                  "FOR UPDATE");
+
+        } else {
+
+            sprintf(buff,
+                "DECLARE cursoru CURSOR FOR "
+                  "SELECT  "
+                    "tid,  "
+                    "value "
+                  "FROM    "
+                    "TestPQ.R_TEST "
+                  "ORDER BY value DESC "
+                  "FOR UPDATE");
+
+        }
+
+        res1 = PQexec(conn, buff);
 
         if (PGRES_COMMAND_OK != PQresultStatus(res1)) {
             retval = KS_NG;
@@ -205,10 +224,21 @@ void *ksUpdate(void *param)
 
             // UPDATE
 
-            sprintf(buff,
-                "UPDATE TestPQ.R_TEST "
-                  "SET value='%s_updated' "
-                "WHERE CURRENT OF cursoru", PQgetvalue(res1, 0, 1));
+            if (1 == pat) {
+
+                sprintf(buff,
+                    "UPDATE TestPQ.R_TEST "
+                      "SET value='%s_updated1' "
+                    "WHERE CURRENT OF cursoru", PQgetvalue(res1, 0, 1));
+
+            } else {
+
+                sprintf(buff,
+                    "UPDATE TestPQ.R_TEST "
+                      "SET value='%s_updated2' "
+                    "WHERE CURRENT OF cursoru", PQgetvalue(res1, 0, 1));
+
+            }
 
             res2 = PQexec(conn, buff);
 
@@ -254,6 +284,20 @@ void *ksUpdate(void *param)
     }
 
     return ((void*)retval);
+
+}
+
+void *ksUpdate1(void *param)
+{
+
+    return ksUpdateSub(param, 1);
+
+}
+
+void *ksUpdate2(void *param)
+{
+
+    return ksUpdateSub(param, 2);
 
 }
 
@@ -319,15 +363,7 @@ void *ksSelectA(void *param)
 
         // BEGIN TRANSACTION
 
-        res = PQexec(conn,
-#if   (KS_ISOLATION_LEVEL == KS_READCOMMITED)
-            "BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED READ ONLY"
-#elif (KS_ISOLATION_LEVEL == KS_SERIALIZABLE)
-            "BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE READ ONLY"
-#else
-#error BAD ISOLATION LEVEL.
-#endif
-            );
+        res = PQexec(conn, KS_BEGINTRANSACTION_READONLY);
 
         if (PGRES_COMMAND_OK != PQresultStatus(res)) {
             retval = KS_NG;
@@ -341,7 +377,7 @@ void *ksSelectA(void *param)
             break;
         }
 
-        KS_SLEEP(100);
+        KS_SLEEP(400);
 
         if (KS_OK != (retval = ksSelectASub(conn, "cursor2"))) {
             break;
@@ -420,15 +456,7 @@ void *ksSelectB(void *param)
 
         // BEGIN TRANSACTION
 
-        res = PQexec(conn,
-#if   (KS_ISOLATION_LEVEL == KS_READCOMMITED)
-            "BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED READ ONLY"
-#elif (KS_ISOLATION_LEVEL == KS_SERIALIZABLE)
-            "BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE READ ONLY"
-#else
-#error BAD ISOLATION LEVEL.
-#endif
-            );
+        res = PQexec(conn, KS_BEGINTRANSACTION_READONLY);
 
         if (PGRES_COMMAND_OK != PQresultStatus(res)) {
             retval = KS_NG;
@@ -444,7 +472,7 @@ void *ksSelectB(void *param)
             break;
         }
 
-        KS_SLEEP(100);
+        KS_SLEEP(500);
 
         if (KS_OK != (retval = ksSelectBSub(conn))) {
             break;
@@ -476,11 +504,14 @@ int main(int argc, const  char* argv[])
 {
 
     int             ret         = KS_OK;
-    PGconn          *connu      = NULL;
+    PGconn          *connu1     = NULL;
+    PGconn          *connu2     = NULL;
     PGconn          *conns      = NULL;
-    pthread_t       thu         = 0;
+    pthread_t       thu1        = 0;
+    pthread_t       thu2        = 0;
     pthread_t       ths         = 0;
-    void            *rthu       = NULL;
+    void            *rthu1      = NULL;
+    void            *rthu2      = NULL;
     void            *rths       = NULL;
     ksInsertContext ictx        [KS_INSERT_COUNT];
 
@@ -509,23 +540,28 @@ int main(int argc, const  char* argv[])
             break;
         }
 
-        if (KS_OK != (ret = ksConnect(&connu)) ||
+        if (KS_OK != (ret = ksConnect(&connu1)) ||
+            KS_OK != (ret = ksConnect(&connu2)) ||
             KS_OK != (ret = ksConnect(&conns))) {
             break;
         }
 
-        if (0 != pthread_create(&thu, NULL, ksUpdate,  (void*)connu)) {
+        if (0 != pthread_create(&ths, NULL, ksSelectB, (void*)conns)) {
             break;
         }
+
+        if (0 != pthread_create(&thu1, NULL, ksUpdate1,  (void*)connu1)) {
+            break;
+        }
+
+        // if (0 != pthread_create(&thu2, NULL, ksUpdate2,  (void*)connu2)) {
+        //    break;
+        // }
 
         for (int idx = 0; idx < KS_INSERT_COUNT; idx++) {
             if (0 != pthread_create(&ictx[idx].pth, NULL, ksInsert,  (void*)&ictx[idx])) {
                 break;
             }
-        }
-
-        if (0 != pthread_create(&ths, NULL, ksSelectB, (void*)conns)) {
-            break;
         }
 
     } while(0);
@@ -545,10 +581,17 @@ int main(int argc, const  char* argv[])
 
     }
 
-    if (thu) {
-        pthread_join(thu, &rthu);
+    if (thu1) {
+        pthread_join(thu1, &rthu1);
         if (ret == KS_OK) {
-            ret = *((long*)&rthu);
+            ret = *((long*)&rthu1);
+        }
+    }
+
+    if (thu2) {
+        pthread_join(thu2, &rthu2);
+        if (ret == KS_OK) {
+            ret = *((long*)&rthu2);
         }
     }
 
@@ -559,8 +602,12 @@ int main(int argc, const  char* argv[])
         }
     }
 
-    if (connu) {
-        PQfinish(connu);
+    if (connu1) {
+        PQfinish(connu1);
+    }
+
+    if (connu1) {
+        PQfinish(connu2);
     }
 
     if (conns) {
